@@ -1,0 +1,100 @@
+Ident -> IDENT fibonacci 
+Ident -> IDENT k 
+Identifiers -> Ident 
+Declaration -> Identifiers COLON INTEGER
+Declarations -> epsilon
+Declarations -> Declaration SEMICOLON Declarations
+Declarations -> epsilon
+Ident -> IDENT k 
+Var -> Ident 
+Term -> Var
+MultExp -> Term
+Expression -> MultExp
+comp -> LTE
+Term -> NUMBER 1
+MultExp -> Term
+Expression -> MultExp
+relation_exp -> Expression Comp Expression
+relation_exp -> relation_exp1
+relation_and_exp -> relation_exp
+bool_exp -> relation_exp
+relation_exp -> L_PAREN BoolExp R_PAREN
+relation_exp -> relation_exp1
+relation_and_exp -> relation_exp
+bool_exp -> relation_exp
+Term -> NUMBER 1
+MultExp -> Term
+Expression -> MultExp
+Statement -> RETURN Expression
+Statements -> Statement SEMICOLON
+ElseStatement -> epsilon
+Statement -> IF BoolExp THEN Statements ElseStatement ENDIF
+Ident -> IDENT fibonacci 
+Ident -> IDENT k 
+Var -> Ident 
+Term -> Var
+MultExp -> Term
+Term -> NUMBER 1
+MultExp -> Term
+Expression -> MultExp
+Expression -> MultExp SUB Expression
+Expressions -> Expression
+Term -> Ident L_PAREN Expressions R_PAREN
+MultExp -> Term
+Ident -> IDENT fibonacci 
+Ident -> IDENT k 
+Var -> Ident 
+Term -> Var
+MultExp -> Term
+Term -> NUMBER 2
+MultExp -> Term
+Expression -> MultExp
+Expression -> MultExp SUB Expression
+Expressions -> Expression
+Term -> Ident L_PAREN Expressions R_PAREN
+MultExp -> Term
+Expression -> MultExp
+Expression -> MultExp ADD Expression
+Statement -> RETURN Expression
+Statements -> Statement SEMICOLON
+Statements -> Statement SEMICOLON Statements
+Function -> FUNCTION Ident SEMICOLON BEGIN_PARAMS Declarations END_PARAMS BEGIN_LOCALS Declarations END_LOCALS BEGIN_BODY Statements END_BODY
+Ident -> IDENT main 
+Declarations -> epsilon
+Ident -> IDENT n 
+Identifiers -> Ident 
+Declaration -> Identifiers COLON INTEGER
+Ident -> IDENT fib_n 
+Identifiers -> Ident 
+Declaration -> Identifiers COLON INTEGER
+Declarations -> epsilon
+Declarations -> Declaration SEMICOLON Declarations
+Declarations -> Declaration SEMICOLON Declarations
+Ident -> IDENT n 
+Var -> Ident 
+Vars -> Var
+Statement -> READ Vars
+Ident -> IDENT fib_n 
+Var -> Ident 
+Ident -> IDENT fibonacci 
+Ident -> IDENT n 
+Var -> Ident 
+Term -> Var
+MultExp -> Term
+Expression -> MultExp
+Expressions -> Expression
+Term -> Ident L_PAREN Expressions R_PAREN
+MultExp -> Term
+Expression -> MultExp
+Statement -> Var ASSIGN Expression
+Ident -> IDENT fib_n 
+Var -> Ident 
+Vars -> Var
+Statement -> WRITE Vars
+Statements -> Statement SEMICOLON
+Statements -> Statement SEMICOLON Statements
+Statements -> Statement SEMICOLON Statements
+Function -> FUNCTION Ident SEMICOLON BEGIN_PARAMS Declarations END_PARAMS BEGIN_LOCALS Declarations END_LOCALS BEGIN_BODY Statements END_BODY
+Program -> epsilon
+Program -> Function Program
+Program -> Function Program
