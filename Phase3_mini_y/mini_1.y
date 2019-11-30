@@ -46,9 +46,9 @@ std::vector<std::string> reservedWords = {"FUNCTION", "BEGIN_PARAMS", "END_PARAM
 %token <num_val> NUMBER
 
 %type <expr> Ident LocalIdent FunctionIdent
-%type <expr> Declaration_s Declaration Identifiers Var Vars
-%type <stat> Statements Statement ElseStatement
-%type <expr> Expression Expressions MultExp Term BoolExp RAExp RExp RExp1 Comp
+%type <expr> Declaration_loop Declaration Identifier_loop Var Var_loop
+%type <stat> Statement_loop Statement ElseStatement
+%type <expr> Expression Expression_loop MultExp Term Bool_Expr Relation_And_Expr Relation_Expr_Not Relation_Expr Comp
 
 %token FUNCTION
 %token BEGIN_PARAMS
@@ -108,7 +108,7 @@ std::vector<std::string> reservedWords = {"FUNCTION", "BEGIN_PARAMS", "END_PARAM
 %left  AND
 %right NOT
 
-%%  /*  Grammar rules and actions follow  */
+%%  /*  Rules of Grammar based on Diagram  */
 
 Program:         %empty
 {
@@ -129,7 +129,7 @@ Program:         %empty
 {
 };
 
-Function:        FUNCTION FunctionIdent SEMICOLON BEGIN_PARAMS Declarations END_PARAMS BEGIN_LOCALS Declarations END_LOCALS BEGIN_BODY Statements END_BODY
+Function:        FUNCTION FunctionIdent SEMICOLON BEGIN_PARAMS Declaration_loop END_PARAMS BEGIN_LOCALS Declaration_loop END_LOCALS BEGIN_BODY Statements END_BODY
 {
   std::string temp = "func ";
   temp.append($2.place);
@@ -161,7 +161,7 @@ Function:        FUNCTION FunctionIdent SEMICOLON BEGIN_PARAMS Declarations END_
 };
 
 
-Declaration:     Identifiers COLON INTEGER
+Declaration:     Identifier_loop COLON INTEGER
 {
   std::string vars($1.place);
   std::string temp;
@@ -216,7 +216,7 @@ Declaration:     Identifiers COLON INTEGER
   $$.code = strdup(temp.c_str());
   $$.place = strdup(empty);	      
 }
-| Identifiers COLON ARRAY L_SQUARE_BRACKET NUMBER R_SQUARE_BRACKET OF INTEGER
+| Identifier_loop COLON ARRAY L_SQUARE_BRACKET NUMBER R_SQUARE_BRACKET OF INTEGER
 {
   // Check if declaring arrays of size <= 0 (test 08)
   if ($5 <= 0) {
@@ -271,12 +271,12 @@ Declaration:     Identifiers COLON INTEGER
   $$.place = strdup(empty);	      
 };
 
-Declarations:    %empty
+Declaration_loop:    %empty
 {
   $$.code = strdup(empty);
   $$.place = strdup(empty);
 }
-| Declaration SEMICOLON Declarations
+| Declaration SEMICOLON Declaration_loop
 {
   std::string temp;
   temp.append($1.code);
@@ -286,12 +286,12 @@ Declarations:    %empty
   $$.place = strdup(empty);
 };
 
-Identifiers:     Ident
+Identifier_loop:     Ident
 {
   $$.place = strdup($1.place);
   $$.code = strdup(empty);
 }
-| Ident COMMA Identifiers
+| Ident COMMA Identifier_loop
 {
   // use "|" as delimeter
   std::string temp;
@@ -303,7 +303,7 @@ Identifiers:     Ident
   $$.code = strdup(empty);
 }
 
-Statements:      Statement SEMICOLON Statements
+Statement_loop:      Statement SEMICOLON Statement_loop
 {
   std::string temp;
   temp.append($1.code);
@@ -353,7 +353,7 @@ Statement:      Var ASSIGN Expression
 
   $$.code = strdup(temp.c_str());
 }
-| IF BoolExp THEN Statements ElseStatement ENDIF
+| IF Bool_Expr THEN Statement_loop ElseStatement ENDIF
 {
   std::string then_begin = newLabel();
   std::string after = newLabel();
@@ -386,7 +386,7 @@ Statement:      Var ASSIGN Expression
   
   $$.code = strdup(temp.c_str());
 }		 
-| WHILE BoolExp BEGINLOOP Statements ENDLOOP
+| WHILE Bool_Expr BEGINLOOP Statement_loop ENDLOOP
 {
   std::string temp;
   std::string beginWhile = newLabel();
@@ -426,7 +426,7 @@ Statement:      Var ASSIGN Expression
 
   $$.code = strdup(temp.c_str());
 }
-| DO BEGINLOOP Statements ENDLOOP WHILE BoolExp
+| DO BEGINLOOP Statement_loop ENDLOOP WHILE Bool_Expr
 {
   std::string temp;
   std::string beginLoop = newLabel();
@@ -456,7 +456,7 @@ Statement:      Var ASSIGN Expression
   
   $$.code = strdup(temp.c_str());
 }
-| FOREACH LocalIdent IN Ident BEGINLOOP Statements ENDLOOP
+| FOREACH LocalIdent IN Ident BEGINLOOP Statement_loop ENDLOOP
 {
   std::string temp;
   std::string count = newTemp();
@@ -556,7 +556,7 @@ Statement:      Var ASSIGN Expression
   
   $$.code = strdup(temp.c_str());
 }
-| READ Vars
+| READ Var_loop
 {
   std::string temp = $2.code;
   size_t pos = 0;
@@ -569,7 +569,7 @@ Statement:      Var ASSIGN Expression
 
   $$.code = strdup(temp.c_str());
 }
-| WRITE Vars
+| WRITE Var_loop
 {
   std::string temp = $2.code;
   size_t pos = 0;
@@ -605,7 +605,7 @@ ElseStatement:   %empty
 {
   $$.code = strdup(empty);
 }
-| ELSE Statements
+| ELSE Statement_loop
 {
   $$.code = strdup($2.code);
 };
@@ -659,7 +659,7 @@ Var:             Ident L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
  * replace "|" with correct < or > depending on read/write
  * in read and write production
  */
-Vars:            Var
+Var_loop:            Var
 {
   std::string temp;
   temp.append($1.code);
@@ -674,7 +674,7 @@ Vars:            Var
   $$.code = strdup(temp.c_str());
   $$.place = strdup(empty);
 }
-| Var COMMA Vars
+| Var COMMA Var_loop
 {
   std::string temp;
   temp.append($1.code);
@@ -738,12 +738,12 @@ Expression:      MultExp
 };
 
 // used only for function calls
-Expressions:     %empty
+Expression_loop:     %empty
 {
   $$.code = strdup(empty);
   $$.place = strdup(empty);
 }
-| Expression COMMA Expressions
+| Expression COMMA Expression_loop
 {
   std::string temp;
   temp.append($1.code);
@@ -921,7 +921,7 @@ Term:            Var
   temp.append(", -1\n");
   $$.code = strdup(temp.c_str());
 }
-| Ident L_PAREN Expressions R_PAREN
+| Ident L_PAREN Expression_loop R_PAREN
 {
    // Check for use of undeclared function (test 2)
   if (functions.find(std::string($1.place)) == functions.end()) {
@@ -946,12 +946,12 @@ Term:            Var
   $$.code = strdup(temp.c_str());
 };
 
-BoolExp:         RAExp 
+Bool_Expr:         Relation_And_Expr 
 {
   $$.place = strdup($1.place);
   $$.code = strdup($1.code);
 }
-| RAExp OR BoolExp
+| Relation_And_Expr OR Bool_Expr
 {
   std::string dest = newTemp();
   std::string temp;
@@ -974,12 +974,12 @@ BoolExp:         RAExp
   $$.place = strdup(dest.c_str());
 };
 
-RAExp:           RExp
+Relation_And_Expr:           Relation_Expr_Not
 {
   $$.place = strdup($1.place);
   $$.code = strdup($1.code);
 }
-| RExp AND RAExp
+| Relation_Expr_Not AND Relation_And_Expr
 {
   std::string dest = newTemp();
   std::string temp;
@@ -1002,7 +1002,7 @@ RAExp:           RExp
   $$.place = strdup(dest.c_str());
 };
 
-RExp:            NOT RExp1 
+Relation_Expr_Not:            NOT Relation_Expr 
 {
   std::string dest = newTemp();
   std::string temp;
@@ -1021,13 +1021,13 @@ RExp:            NOT RExp1
   $$.code = strdup(temp.c_str());
   $$.place = strdup(dest.c_str());
 }
-| RExp1
+| Relation_Expr
 {
   $$.place = strdup($1.place);
   $$.code = strdup($1.code);
 };
 
-RExp1:           Expression Comp Expression
+Relation_Expr:           Expression Comp Expression
 {
   std::string dest = newTemp();
   std::string temp;  
@@ -1060,7 +1060,7 @@ RExp1:           Expression Comp Expression
   $$.place = strdup(temp);
   $$.code = strdup(empty);
 }
-| L_PAREN BoolExp R_PAREN
+| L_PAREN Bool_Expr R_PAREN
 {
   $$.place = strdup($2.place);
   $$.code = strdup($2.code);
@@ -1153,4 +1153,3 @@ std::string newLabel() {
   std::string temp = "__label__" + std::to_string(num++);
   return temp;
 }
-		 
